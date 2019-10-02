@@ -1,0 +1,98 @@
+## Factor Analysis 
+
+## Libraries
+library(readxl)
+library(psych)
+library(corrgram)
+library(GPArotation)
+library(psych)
+library(mvtnorm)
+
+## Διαβάζουμε τα δεδομένα
+beck<-read_xls('C:\\Users\\MakropoulouA\\Desktop\\data_beck.xls')
+
+## Κατασκευάζουμε τον πίνακα συσχετίσεων 
+x<-cor(beck[,2:32])
+R<-round(cor(beck[,2:32]),3)
+
+## Κρατέμε τις συσχετίσεις μεγαλύτερες του 0.3 που ίσως έχουν 
+##κάποιο ενδιαφέρον
+is.na(R) <- abs(R) < 0.3
+
+upper<-round(R,3)
+upper[upper.tri(R)]<-""
+upper<-as.data.frame(upper)
+upper
+
+## Εφαρμόζουμε το κριτήριο Kaiser Meyer Olkin  για να δούμε
+## αν όντως όλες οι μεταβλητές ειναι κατάλληλες για να μπουν
+## στο μοντέλο
+KMO(beck[,2:32])
+
+## Έλεγχος συχέτισης του Bartlett
+cortest.bartlett(beck[,2:32])
+corr.test(beck[,2:32])
+
+## Διάγραμμα συσχετίσεων
+corrgram(beck[,2:32])
+
+## Scree plot για να πάρουμε μία πρώτη ένδειξη των παραγόντων 
+## που θα χρησιμοποιήσουμε
+pc<-princomp(beck[,2:32], scores=T, cor=T)
+screeplot(pc, type= "line", main= 'Scree Plot')
+
+## Μοντέλο με 4 παράγοντες και περιστροφή που ελαχιστοποιεί τις 
+## μεταβλητές που έχουνμεγάλες επιβαρύνσεις για κάθε παράγοντα
+mymodel<- factanal(beck[,2:32] , factors = 4, rotation = "varimax")
+mymodel
+
+## Επιβαρύνσεις 
+mymodel$loadings
+
+## Κοιτάμε τις επιβαρύνσεις μεγαλύτερες του 0.3
+print(mymodel$loadings,digits=3,cutoff=0.4)
+
+#These values are secondary information and tell you the percentage of the statistical variance for 
+#each original variable that isn’t explained by the factors.A large uniqueness value indicates that 
+#none of the latent factors captures a variable well, so smaller values are better. 
+mymodel$uniqueness
+diag(mymodel$uniqueness)
+
+##  ο εκτιμημένος πίνακας διακύμανσης
+(mymodel2$loadings)%*%t(mymodel2$loadings)
+
+## Το ορθογώνιο μοντέλο
+(mymodel$loadings)%*%t(mymodel$loadings) + diag(mymodel$uniqueness)
+cor(beck[,2:32])
+
+
+fittedcor<-(mymodel$loadings)%*%t(mymodel$loadings) + diag(mymodel$uniqueness)
+observed<-cor(beck[,2:32])
+
+round(fittedcor-observed,3)
+
+corrgram(fittedcor)
+corrgram(observed)
+
+fa.diagram(mymodel$loadings, cut=0.3)
+plot(mymodel$loadings)
+
+
+points(mymodel$loadings,pch=2, col=2)
+plot(mymodel$loadings, xlim=c(-1,1), ylim=c(-1,1))
+text(mymodel$loadings,colnames(beck[,-c(1,12,20,24,25:31)]))
+
+
+## Εκτίμηση των score των παραγόντων
+mymodelsc<- factanal(beck[,2:32], factors=4,scores="regression")
+mymodelsc2<- factanal(beck[,2:32], factors=4,scores="Bartlett")
+mymodelsc$scores
+mymodelsc
+mymodelsc2
+
+cor(mymodelsc$scores)
+var(mymodelsc$scores)
+plot(mymodelsc$scores[,1],mymodelsc$scores[,1], xlab="Factor 1 Scores",
+     ylab="Factor 2 Scores")
+
+boxplot(split(mymodelsc$scores[,2], data[,7]))
