@@ -1,6 +1,6 @@
 # Basic-Factor-Analysis
 
-The dataset describes an anxiety study performed at a university. The subjects were the students. We do have alterate the demographics for
+The dataset describes an anxiety study performed at a university. The subjects were students. We do have alterate the demographics for
 confidentiality purposes.
 
 We used the Beck Anxiety Inventory as scale measure.
